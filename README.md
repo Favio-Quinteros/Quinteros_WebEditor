@@ -1,1 +1,2 @@
-# Quinteros_WebEditor
+# Quinteros-WebEditor
+Progetto Web Editor Asmeta
