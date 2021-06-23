@@ -1,0 +1,6 @@
+org\xtext\asmetal\web\AsmetaLServlet.class
+org\xtext\asmetal\web\AsmetaLWebSetup.class
+org\xtext\asmetal\web\EditorServlet.class
+org\xtext\asmetal\web\AsmetaLWebModule.class
+org\xtext\asmetal\web\ServerLauncher.class
+org\xtext\asmetal\web\AbstractAsmetaLWebModule.class
