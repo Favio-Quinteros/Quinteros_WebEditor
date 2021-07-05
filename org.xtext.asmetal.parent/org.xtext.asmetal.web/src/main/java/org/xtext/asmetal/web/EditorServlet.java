@@ -1,55 +1,55 @@
 package org.xtext.asmetal.web;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.io.File;
+import java.nio.file.Files;
+import java.net.URLEncoder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.File;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Cookie;
 import org.asmeta.parser.*;
 
+ 
 /**
  * Servlet
  */
-@WebServlet(name = "EditorServlet", urlPatterns = { "/EditorServlet/*" })
+@WebServlet(name = "EditorServlet", urlPatterns = {"/EditorServlet"})
 
 public class EditorServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-
-	// to find the asm name
 	static Pattern p = Pattern.compile("asm[\\s]*[^\\s]*");
-
+	//modificare questo URL se si cambia server
+	final String URLjsp = "http://localhost:8080/Editor.jsp";
+	
+	final int Timeout_cookie=180;
+	
 	public EditorServlet() {
 		super();
 	}
-
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		// NO GET use POST
+	
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	
 	}
-
+ 
+ 
 	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
-	 *      response)
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
-		System.out.println("XXXXX");
-		// check if standard libary exists
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		saveStandardLibrary();
 		//
 		String parseResult = "";
 		String text = request.getParameter("key");
-		System.out.println(text);
 		if (text == null) {
-			parseResult = "asm nulla";
+			parseResult = "empty asm";
 		} else {
 			// estrai il nome della asm
 			Matcher m = p.matcher(text);
@@ -67,34 +67,39 @@ public class EditorServlet extends HttpServlet {
 				scrivi.close();
 				// call the parser
 				try {
+					@SuppressWarnings("unused")
 					asmeta.AsmCollection asms = ASMParser.setUpReadAsm(codice);
 					ParserResultLogger resultLogger = ASMParser.getResultLogger();
 					if (resultLogger.errors.size() == 0)
-						parseResult = "Nessun errore";
+						parseResult = "No errors found. Parsing succsessful.";
 				} catch (Exception e) {
 					parseResult = e.getMessage();
 				}
 			} else {
-				parseResult = "devi dichiarare asm <nome>";
+				parseResult = "Must declare asm <name>.";
 			}
 		}
-		response.setContentType("text/plain"); // Set content type of the response so that jQuery knows what it can
-												// expect.
-		response.setCharacterEncoding("UTF-8"); // You want world domination, huh?
-		response.getWriter().write(parseResult);
-		// request.setAttribute("result", parseResult);
-		// request.getRequestDispatcher("Editor.jsp").forward(request, response);
+		@SuppressWarnings("deprecation")
+		String cod =  URLEncoder.encode(text);
+		Cookie cookie = new Cookie("cookie",cod);
+		cookie.setMaxAge(Timeout_cookie);
+		response.addCookie(cookie);
+		System.out.println(parseResult);
+		@SuppressWarnings("deprecation")
+		String cod2 = URLEncoder.encode(parseResult);
+		Cookie cookie2 = new Cookie("cookie2",cod2);
+		cookie2.setMaxAge(Timeout_cookie);
+		response.addCookie(cookie2);
+		response.sendRedirect (URLjsp);
 	}
-
-	// save the standard library if not present
-	private void saveStandardLibrary() throws FileNotFoundException {
+	
+	// save the standard library if not present	
+	private void saveStandardLibrary() throws FileNotFoundException, IOException {
 		File stdLib = new File("StandardLibrary.asm");
 		if (stdLib.exists())
 			return;
-		PrintWriter scrivi = new PrintWriter(stdLib);
-		scrivi.print("module StandardLibrary");
-		// TODO save the standard library
-		scrivi.close();
+		File sorgente = new File("STDL/StandardLibrary.asm");
+		Files.copy(sorgente.toPath(), stdLib.toPath());
 	}
-
+ 
 }
